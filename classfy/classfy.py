@@ -2,7 +2,10 @@
 import jieba
 from numpy import *
 from pymongo import MongoClient
+import sys
+import os
 
+here = sys.path[0]
 client = MongoClient('localhost',27017)
 db=client.comment
 collection=db.labelled
@@ -13,7 +16,7 @@ def stopwordslist(filepath):
 
 def seg_sentence(sentence):
     sentence_seged = jieba.cut(sentence.strip())
-    stopwords = stopwordslist('stopwords.txt')  # 这里加载停用词的路径
+    stopwords = stopwordslist(os.path.join(here,'stopwords.txt'))  # 这里加载停用词的路径
     returnlist = []
     for word in sentence_seged:
         if word not in stopwords:
@@ -34,7 +37,7 @@ def createVocabList():
     vocabList = list(vocabSet)
     # print(vocabList.__len__())
 
-    with open("vocab.txt", 'w', encoding='utf-8') as f:
+    with open(os.path.join(here,"vocab.txt"), 'w', encoding='utf-8') as f:
         for vocab in vocabList:
             f.write(vocab+"\n")
 
@@ -85,7 +88,7 @@ if __name__ == "__main__":
     for i in range(demarcation):
         trainMat.append(bagOfWords2VecMN(vocabList, docList[i]))
         trainClasses.append(classList[i])
-    print(trainClasses)
+
     p0V, p1V, pSpam = trainNB0(array(trainMat), array(trainClasses))  # 训练
     print("训练完毕")
 

@@ -1,7 +1,12 @@
 import random
+
+import sys
+
+import os
 from PIL import Image
 from decimal import *
 
+here = sys.path[0]
 getcontext().prec = 20
 num = 0
 gen_x_width = 0
@@ -52,7 +57,7 @@ def generate_pic(i,seta):
         if i == 100:
             print(px[x, y])
 
-    im.save("pic/{}.jpg".format(i))
+    im.save(os.path.join(here,"pic","{}.jpg".format(i)))
 
 def adaptive(RGB):
     return 0.299*RGB[0] + 0.587*RGB[1] + 0.114*RGB[2]
@@ -196,7 +201,9 @@ def survival_of_the_fittest(last_generation,width,height):
 
 
 if __name__ == '__main__':
-    im = Image.open('pic.jpg')
+    if not os.path.exists(os.path.join(here,"pic")):
+        os.makedirs(os.path.join(here,"pic"))
+    im = Image.open(os.path.join(here,'pic.jpg'))
     px = im.load()
     width, height = im.size
     num = int(width*height/3)
@@ -207,7 +214,7 @@ if __name__ == '__main__':
 
     current_generation = generate_first_generation(width,height)          #第一代
 
-    for i in range(100):
+    for i in range(10):
         new_generation = survival_of_the_fittest(current_generation,width,height)        #适者生存产生新的一代
         current_generation = new_generation
         step += 1
