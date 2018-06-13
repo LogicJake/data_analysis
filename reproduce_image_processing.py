@@ -1,16 +1,21 @@
 import random
+
+import numpy as np
 from PIL import Image
+from multiprocessing import Process, Pool, Manager
 from decimal import *
 
 getcontext().prec = 20
 num = 0
 gen_x_width = 0
 gen_y_width = 0
-cross_rate = 1
+cross_rate = 0.01
 variation_rate = 0.0001
 px = None
 step = 0
 
+num_select = 10
+num_oh_baby = 100
 class blackc():
     def __init__(self, x,y,adaptive):
         self.x = x
@@ -66,8 +71,28 @@ def generate_first_generation(width,height):
         seta.append(blackcc)
     return seta
 
+def process_select(last_generation):
+    select_generation = list()
+    chooices = np.random.random(num_select)
+    for i in range(num_select):
+        chooice = Decimal(chooices[i]).quantize(Decimal('0.00000000000000000000'))
+        for i in last_generation:
+            if i.is_select(chooice):
+                select_generation.append(i)
+                break
+    return select_generation
+
 def select(last_generation):
     select_generation = list()  # 被选中繁殖的那群物种
+
+    p = Pool(4)  # 开辟进程池
+    for i in range(int(num/num_select)):
+        res = p.apply_async(process_select, args=(last_generation,))
+        select_generation.extend(res.get())
+
+    p.close()
+    p.join()
+
     while select_generation.__len__() != num:
         chooice = Decimal(random.uniform(0, 1)).quantize(Decimal('0.00000000000000000000'))
         for i in last_generation:
@@ -76,8 +101,8 @@ def select(last_generation):
                 break
     return select_generation
 
-def oh_babay(select_generation):
-    for i in range(int(select_generation.__len__()/2*cross_rate)):    #根据交叉率决定交叉几次
+def process_oh_babay(select_generation):
+    for i in range(num_oh_baby):    
         father = select_generation[random.randint(0,select_generation.__len__()-1)]  #随机选择父亲
         while not father.fertile:       #假如挑选的是被交叉出来的子代，则重新选择
             father = select_generation[random.randint(0, select_generation.__len__()-1)]  # 随机选择父亲
@@ -123,7 +148,24 @@ def oh_babay(select_generation):
 
         father.reset(father_new_x,father_new_y,adaptive(px[father_new_x,father_new_y]))         #新的基因
         mother.reset(mother_new_x,mother_new_y,adaptive(px[mother_new_x,mother_new_y]))
-    return select_generation
+
+def oh_babay(select_generation):
+    manager = Manager()
+    s = manager.list()
+    s.extend(select_generation)
+
+    cross_num = int(select_generation.__len__()/2/num_oh_baby*cross_rate)
+    p = Pool(4)  # 开辟进程池
+    for i in range(cross_num):
+        p.apply_async(process_oh_babay, args=(s,))
+
+    p.close()
+    p.join()
+    
+    new_generation = list()
+    new_generation.extend(s)
+
+    return new_generation
 
 def variation(select_generation):
     for i in range(int(variation_rate*select_generation.__len__()*gen_x_width)):
@@ -163,10 +205,10 @@ def variation(select_generation):
 
 def survival_of_the_fittest(last_generation,width,height):
     #准备阶段，算出选择概论和积累概率
-    total_adaptive = 1             #总适应度
+    total_adaptive = 1              #总适应度
     for i in last_generation:
         total_adaptive += i.adaptive
-    # print(total_adaptive)
+    print(total_adaptive)
 
     for i in last_generation:
         i.set_selection_probability(Decimal(i.adaptive)/Decimal(total_adaptive))
@@ -177,7 +219,7 @@ def survival_of_the_fittest(last_generation,width,height):
         pre = pre + i.selection_probability
 
     generate_pic(step, last_generation)
-    print("照射率：{}%".format((total_adaptive-1)/(num*255)*100))
+    print("采光率：{}%".format((total_adaptive-1)/(num*255)*100))
 
     # 选择
     step_1 = select(last_generation)
@@ -207,7 +249,8 @@ if __name__ == '__main__':
 
     current_generation = generate_first_generation(width,height)          #第一代
 
-    for i in range(100):
+    for i in range(10):
         new_generation = survival_of_the_fittest(current_generation,width,height)        #适者生存产生新的一代
         current_generation = new_generation
         step += 1
+
