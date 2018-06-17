@@ -46,7 +46,6 @@ class blackc():
         self.gen_y = bin(y).replace("0b","").zfill(gen_y_width)
         self.adaptive = adaptive
 
-
 def generate_pic(i,seta):
     im = Image.open('pic.jpg')
     new_px = im.load()
@@ -94,29 +93,38 @@ def oh_babay(select_generation):
         #交叉操作
         father_gen_x = father.gen_x
         mother_gen_x = mother.gen_x
+
         while(1):
-            split_x = random.randint(0,gen_x_width)
+            start_index = random.randint(0, gen_x_width)
+            num = random.randint(0, gen_x_width-start_index)
+
             father_gen_x = father.gen_x
             mother_gen_x = mother.gen_x
-            # 交换基因
-            tmp = mother_gen_x[split_x:]
 
-            mother_gen_x = mother_gen_x[:split_x]+father_gen_x[split_x:]
-            father_gen_x = father_gen_x[:split_x]+tmp
+            father_part = father_gen_x[start_index:start_index+num+1]
+            mother_part = mother_gen_x[start_index:start_index + num + 1]
+            # 交换基因
+
+            mother_gen_x = mother_gen_x[:start_index]+father_part+mother_gen_x[start_index+num+1:]
+            father_gen_x = father_gen_x[:start_index]+mother_part+father_gen_x[start_index+num+1:]
             if int(mother_gen_x,2) < width and int(father_gen_x,2) < width:
                 break
 
         father_gen_y = father.gen_y
         mother_gen_y = mother.gen_y
         while(1):
-            split_y = random.randint(0, gen_y_width)
+            start_index = random.randint(0, gen_y_width)
+            num = random.randint(0, gen_y_width - start_index)
+
             father_gen_y = father.gen_y
             mother_gen_y = mother.gen_y
-            # 交换基因
-            tmp = mother_gen_y[split_y:]
 
-            mother_gen_y = mother_gen_y[:split_y]+father_gen_y[split_y:]
-            father_gen_y = father_gen_y[:split_y]+tmp
+            father_part = father_gen_y[start_index:start_index + num + 1]
+            mother_part = mother_gen_y[start_index:start_index + num + 1]
+            # 交换基因
+
+            mother_gen_y = mother_gen_y[:start_index] + father_part + mother_gen_y[start_index + num + 1:]
+            father_gen_y = father_gen_y[:start_index] + mother_part + father_gen_y[start_index + num + 1:]
             if int(mother_gen_y,2) < height and int(father_gen_y,2) < height:
                 break
 
