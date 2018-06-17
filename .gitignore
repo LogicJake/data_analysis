@@ -105,6 +105,3 @@ venv.bak/
 # mypy
 .mypy_cache/
 .idea/
-
-/cluster/pic/
-/optimization/pic/
